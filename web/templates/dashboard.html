@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>监护端 | 智能导盲系统</title>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Icon Font (Material Icons) -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Socket.IO -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <!-- AMap -->
+    <!-- AMap -->
+    <script type="text/javascript">
+        window._AMapSecurityConfig = {
+            securityJsCode: {{ config['AMAP_JS_SECURITY_CODE'] | tojson }}, // 用户提供的高德地图 Web端(JS API) 安全密钥
+        }
+    </script>
+    <!-- 请确保这里的 key 是 Web端 (JSAPI) 的 Key，区别于后端的 Web服务 Key -->
+    <script type="text/javascript"
+        src="https://webapi.amap.com/maps?v=2.0&key={{ config['AMAP_JS_API_KEY'] | urlencode }}"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- Bind Modal Logic -->
+    {% if show_bind_modal %}
+    <div class="modal-overlay">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 8px;">关联视障端设备</h2>
+            <p style="color: var(--text-secondary); margin-bottom: 24px;">请输入视障用户的用户名进行配对</p>
+            <div class="input-row" style="margin-bottom: 24px;">
+                <input type="text" id="bind-user-input" class="input-field" placeholder="输入用户名">
+            </div>
+            <button onclick="bindUser()" class="btn btn-primary" style="width: 100%;">立即绑定</button>
+            <p id="bind-msg" style="color: var(--error-color); margin-top: 16px; min-height: 20px; font-size: 0.9rem;">
+            </p>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="material-icons" style="color: var(--primary-color);">visibility</span>
+            <span>BlindAssist</span>
+        </div>
+
+        <ul class="nav-links">
+            <li class="nav-item">
+                <a href="{{ url_for('index') }}" class="nav-link active">
+                    <span class="material-icons nav-icon">dashboard</span>
+                    仪表盘
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('history') }}" class="nav-link">
+                    <span class="material-icons nav-icon">history</span>
+                    历史记录
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('mobile_nav') }}" class="nav-link" style="color: #28a745; font-weight: bold;">
+                    <span class="material-icons nav-icon">smartphone</span>
+                    进入手机导航
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('settings') }}" class="nav-link">
+                    <span class="material-icons nav-icon">settings</span>
+                    设置
+                </a>
+            </li>
+        </ul>
+
+        <div class="user-profile">
+            <div class="avatar">{{ user.username[0] | upper }}</div>
+            <div class="user-info">
+                <div class="user-name">{{ user.username }}</div>
+                <div class="user-role">{% if user.role == 'guardian' %}监护人{% else %}用户{% endif %}</div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" title="退出登录"
+                style="color: var(--text-secondary); text-decoration: none;">
+                <span class="material-icons">logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Topbar -->
+        <header class="topbar">
+            <h1 class="page-title">实时监控中心</h1>
+            <div class="status-indicators">
+                <div class="status-badge" id="conn-status">
+                    <span class="material-icons" style="font-size: 16px;">wifi</span>
+                    <span id="conn-text">连接建立中...</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-container">
+
+            <!-- 1. Real-time Video Feed & Map -->
+            <div class="media-group">
+                <div class="card video-card">
+                    {% if user.role == 'guardian' and not user.linked_user_id %}
+                    <div style="color: white; text-align: center; margin: auto;">请先绑定视障端账号</div>
+                    {% elif user.role == 'user' %}
+                    <div style="color: white; text-align: center; margin: auto;">此处为监护端视图<br>当前仅预览</div>
+                    {% else %}
+                    <!-- The image src is updated via Socket.IO in script.js, but we set a fallback initially -->
+                    <img id="liveVideo" class="live-video" src="{{ url_for('video_feed') }}"
+                        onerror="this.style.display='none'; this.parentElement.innerHTML+='<div class=\'no-signal-msg\' style=\'color:white; margin: auto;\'>信号丢失</div>'">
+                    <div class="video-overlay" id="stat-fps">FPS: --</div>
+                    <div class="video-toolbar">
+                        <button class="btn btn-primary btn-toolbar" onclick="window.toggleFullScreen()">
+                            <span class="material-icons" style="font-size: 16px;">fullscreen</span>全屏
+                        </button>
+                        <button class="btn btn-primary btn-toolbar" onclick="window.captureSnapshot()">
+                            <span class="material-icons" style="font-size: 16px;">camera_alt</span>截图
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="card map-card">
+                    <div id="amap-container"></div>
+                    <div class="map-overlay">实时位置</div>
+                </div>
+            </div>
+
+            <!-- 2. Controls & Actions -->
+            <div class="card control-panel">
+                <div class="card-header">
+                    <div class="card-title">远程干预</div>
+                    <span class="material-icons" style="color: var(--primary-color);">campaign</span>
+                </div>
+
+                <!-- TTS -->
+                <div class="control-group">
+                    <label class="control-label">语音播报与对讲</label>
+                    <div class="input-row" style="margin-bottom: 8px;">
+                        <input type="text" id="tts-input" class="input-field" placeholder="输入提示内容..." {% if user.role
+                            !='guardian' %}disabled{% endif %}>
+                        <button class="btn btn-primary" onclick="sendTTS()" {% if user.role !='guardian' %}disabled{%
+                            endif %}>发送文字</button>
+                    </div>
+                    <div class="input-row">
+                        <button id="ptt-btn" class="btn btn-primary"
+                            style="width: 100%; display: flex; justify-content: center; align-items: center; gap: 8px; background-color: #f9ab00;"
+                            onmousedown="startRecording()" onmouseup="stopRecording()" ontouchstart="startRecording()"
+                            ontouchend="stopRecording()" {% if user.role !='guardian' %}disabled{% endif %}>
+                            <span class="material-icons">mic</span><span id="ptt-text">按住说话</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sensitivity -->
+                <div class="control-group">
+                    <label class="control-label" style="display:flex; justify-content:space-between;">
+                        <span>避障灵敏度</span>
+                        <span id="sens-val" style="color: var(--primary-color); font-weight:bold;">0.3</span>
+                    </label>
+                    <div class="slider-container">
+                        <span style="font-size:0.8rem; color:var(--text-secondary);">低</span>
+                        <input type="range" class="range-slider" id="sens-slider" min="0.1" max="0.9" step="0.1"
+                            value="0.3" onchange="updateConfig()">
+                        <span style="font-size:0.8rem; color:var(--text-secondary);">高</span>
+                    </div>
+                </div>
+
+                <!-- SOS -->
+                <div style="margin-top:auto;">
+                    <button class="btn btn-danger" onclick="sendSOS()"
+                        style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                        <span class="material-icons">warning</span>
+                        紧急 SOS 警报 (高音)
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. Logs -->
+            <div class="card log-card">
+                <div class="card-header" style="margin-bottom: 12px;">
+                    <div class="card-title">系统日志</div>
+                    <span class="material-icons" style="color: var(--text-secondary);">list</span>
+                </div>
+                <div class="log-list" id="log-container">
+                    <!-- Injected by JS -->
+                    <div style="padding: 12px; color: var(--text-secondary); text-align: center;">加载中...</div>
+                </div>
+            </div>
+
+            <!-- 4. Stats -->
+            <div class="card stats-card">
+                <div class="card-header">
+                    <div class="card-title">设备状态</div>
+                </div>
+
+                <div style="display: flex; gap: 16px; justify-content: space-around; margin-bottom: 16px;">
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--primary-color);"
+                            id="stat-latency">--</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">网络延迟</div>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="font-size: 1.5rem; font-weight: bold; color: var(--success-color);"
+                            id="stat-battery">--</div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary);">剩余电量</div>
+                    </div>
+                </div>
+
+                <div style="flex: 1; position: relative; min-height: 0;">
+                    <canvas id="obsChart"></canvas>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Pass backend variables to JS -->
+    <script>
+        const isGuardian = {% if user.role == 'guardian' %}true{% else %} false{% endif %};
+    </script>
+    <!-- Custom Script with cache-buster to enforce Map logic updates -->
+    <script src="{{ url_for('static', filename='script.js') }}?v=3.5"></script>
+</body>
+
+</html>

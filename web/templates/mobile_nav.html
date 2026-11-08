@@ -1,0 +1,541 @@
+{% extends "mobile_layout.html" %}
+
+{% block header_actions %}
+<div id="conn-badge" class="badge badge-error">已断开</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* 局部专属样式 */
+    .status-panel {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        font-size: 0.85rem;
+    }
+
+    .badge {
+        padding: 4px 10px;
+        border-radius: var(--radius-xl);
+        font-size: 0.75rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        transition: background-color 0.3s ease;
+    }
+
+    .badge-error {
+        background: rgba(255, 69, 58, 0.15);
+        color: var(--danger);
+        border: 1px solid rgba(255, 69, 58, 0.3);
+    }
+
+    .badge-success {
+        background: rgba(52, 199, 89, 0.15);
+        color: var(--primary);
+        border: 1px solid rgba(52, 199, 89, 0.3);
+    }
+
+    .badge-warning {
+        background: rgba(255, 159, 10, 0.15);
+        color: var(--warning);
+        border: 1px solid rgba(255, 159, 10, 0.3);
+    }
+
+    /* 路线卡片增强 */
+    .route-card {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px;
+        background: linear-gradient(145deg, var(--bg-elevated), #2a2a2c);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        border-radius: var(--radius-xl);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .route-card::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(10, 132, 255, 0.05) 0%, transparent 60%);
+        pointer-events: none;
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .input-wrapper .material-icons-round {
+        position: absolute;
+        left: 14px;
+        color: var(--primary);
+        font-size: 20px;
+    }
+
+    .modern-input {
+        width: 100%;
+        padding: 16px 16px 16px 44px;
+        background: rgba(0, 0, 0, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: var(--radius-lg);
+        color: var(--text-primary);
+        font-size: 1.05rem;
+        transition: all 0.3s ease;
+    }
+
+    .modern-input:focus {
+        background: rgba(0, 0, 0, 0.4);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.2);
+        outline: none;
+    }
+
+    .mode-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        border-radius: var(--radius-lg);
+        padding: 6px;
+        gap: 8px;
+        position: relative;
+    }
+
+    .mode-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        padding: 12px 4px;
+        border-radius: calc(var(--radius-lg) - 4px);
+        font-weight: 600;
+        font-size: 1rem;
+        white-space: nowrap;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .mode-btn.active {
+        color: #fff;
+        background: var(--primary);
+        box-shadow: 0 4px 12px rgba(10, 132, 255, 0.4);
+    }
+
+    /* 启动大按钮 */
+    #start-nav-btn {
+        min-height: 60px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        border-radius: var(--radius-lg);
+        background: linear-gradient(135deg, var(--success), #28a745);
+        border: none;
+        box-shadow: 0 8px 20px rgba(52, 199, 89, 0.3);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    #start-nav-btn:active {
+        transform: scale(0.98);
+        box-shadow: 0 4px 10px rgba(52, 199, 89, 0.2);
+    }
+
+    #start-nav-btn.navigating {
+        background-color: var(--danger);
+        color: #fff;
+        box-shadow: 0 4px 15px rgba(255, 69, 58, 0.3);
+    }
+
+    /* 日志控制台区域 */
+    .log-container {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .log-bubble {
+        background: var(--bg-elevated);
+        border-radius: var(--radius-md);
+        border-top-left-radius: 4px;
+        padding: 12px 16px;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        position: relative;
+        animation: slideUp 0.3s ease-out;
+    }
+
+    .log-warning {
+        border-left: 3px solid var(--warning);
+    }
+
+    .log-danger {
+        border-left: 3px solid var(--danger);
+        background: rgba(255, 69, 58, 0.1);
+    }
+
+    .log-time {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* 隐藏地图容器，保持其存在以应对可能的 API 需求 */
+    #amap-container {
+        display: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- 状态卡片 -->
+<div class="glass-card status-panel">
+    <div style="display: flex; flex-direction: column; gap: 4px;">
+        <span id="gps-status" class="text-secondary"><span class="material-icons-round"
+                style="font-size: 14px; vertical-align: middle;">location_searching</span> GPS 定位中...</span>
+        <span id="gps-coords" class="text-muted" style="font-size: 0.7rem;">获取坐标信息...</span>
+    </div>
+</div>
+
+<!-- 控制卡片 -->
+<div class="glass-card route-card">
+    <div style="font-size: 1.1rem; font-weight: 600; color: #fff; margin-bottom: 4px; z-index: 1;">出行设置</div>
+
+    <div class="input-wrapper" style="z-index: 1;">
+        <span class="material-icons-round">place</span>
+        <input type="text" id="dest-input" class="modern-input" placeholder="您想去哪里？(例如：天安门)">
+    </div>
+
+    <div class="mode-selector" style="z-index: 1;">
+        <button id="mode-walk" class="mode-btn active" onclick="setMode('walking')">
+            <span class="material-icons-round" style="font-size: 20px;">directions_walk</span> 智能步行
+        </button>
+        <button id="mode-transit" class="mode-btn" onclick="setMode('transit')">
+            <span class="material-icons-round" style="font-size: 20px;">directions_bus</span> 公交换乘
+        </button>
+    </div>
+
+    <button id="start-nav-btn" class="btn-modern btn-primary" onclick="toggleNav()"
+        style="z-index: 1; margin-top: 8px;">
+        <span class="material-icons-round" style="margin-right: 8px;">navigation</span> 开始探索
+    </button>
+</div>
+
+<!-- 语音播报日志卡片 -->
+<div style="margin-bottom: 8px; margin-left: 4px; font-size: 0.85rem; color: var(--text-secondary); font-weight: 500;">
+    实时语音播报记录
+</div>
+<div id="output" class="log-container">
+    <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px;">
+        准备就绪。
+    </div>
+</div>
+
+<div id="amap-container"></div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- 请确保这里的 key 是 Web端 (JSAPI) 的 Key，区别于后端的 Web服务 Key -->
+<script type="text/javascript">
+    window._AMapSecurityConfig = {
+        securityJsCode: {{ config['AMAP_JS_SECURITY_CODE'] | tojson }},
+    }
+</script>
+<script type="text/javascript" src="https://webapi.amap.com/maps?v=2.0&key={{ config['AMAP_JS_API_KEY'] | urlencode }}"></script>
+<script>
+    // == UI Logic ==
+    // Use .get() defensively since dict keys might be absent
+    let currentMode = '{{ nav_state.get("mode", "walking") if nav_state else "walking" }}';
+    let isNavigatingStr = '{{ "true" if (nav_state and nav_state.get("is_navigating", false)) else "false" }}';
+    let isNavigating = (isNavigatingStr === 'true');
+    let lastLat = null;
+    let lastLon = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        setMode(currentMode);
+        if (isNavigating) {
+            const destName = '{{ nav_state.get("destination", "") if nav_state else "" }}';
+            if (destName && destName !== 'None') {
+                document.getElementById('dest-input').value = destName;
+            }
+            const btn = document.getElementById('start-nav-btn');
+            btn.innerHTML = '<span class="material-icons-round" style="margin-right: 8px;">close</span> 结束导航';
+            btn.classList.add('navigating');
+            addLog(`[可继续] 您正在前往：${destName} (${currentMode === 'walking' ? '智能步行' : '公交换乘'})`, 'info');
+        }
+    });
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById('mode-walk').classList.remove('active');
+        document.getElementById('mode-transit').classList.remove('active');
+        if (mode === 'walking') {
+            document.getElementById('mode-walk').classList.add('active');
+        } else {
+            document.getElementById('mode-transit').classList.add('active');
+        }
+    }
+
+    function toggleNav() {
+        if (!isNavigating) {
+            if (lastLat === null) {
+                alert("GPS定位未准备好，请稍后再试。");
+                return;
+            }
+            const dest = document.getElementById('dest-input').value.trim();
+            if (!dest) {
+                alert("请输入目的地");
+                return;
+            }
+
+            // Request permissions for PDR / TTS audio unlock on first user interaction
+            requestMotionPermissions();
+
+            // Inform backend
+            socket.emit('start_nav', {
+                destination: dest,
+                location: `${lastLon},${lastLat}`,
+                mode: currentMode
+            });
+
+            isNavigating = true;
+            const btn = document.getElementById('start-nav-btn');
+            btn.innerHTML = '<span class="material-icons-round" style="margin-right: 8px;">close</span> 结束导航';
+            btn.classList.add('navigating');
+            addLog(`正在请求导航至：${dest} (${currentMode === 'walking' ? '智能步行' : '公交换乘'})`);
+        } else {
+            // Stop navigation
+            socket.emit('stop_nav');
+            isNavigating = false;
+            const btn = document.getElementById('start-nav-btn');
+            btn.innerHTML = '<span class="material-icons-round" style="margin-right: 8px;">navigation</span> 开始探索';
+            btn.classList.remove('navigating');
+            addLog("已结束本次导航。");
+        }
+    }
+
+    // == Logging ==
+    function addLog(msg, level = 'info') {
+        const out = document.getElementById('output');
+        // Clear placeholder
+        if (out.innerHTML.includes('准备就绪')) {
+            out.innerHTML = '';
+        }
+
+        const now = new Date();
+        const timeStr = now.getHours().toString().padStart(2, '0') + ':' +
+            now.getMinutes().toString().padStart(2, '0') + ':' +
+            now.getSeconds().toString().padStart(2, '0');
+
+        let extraClass = '';
+        if (level === 'warning' || msg.includes('注意') || msg.includes('偏离')) extraClass = 'log-warning';
+        if (level === 'danger' || msg.includes('危险') || msg.includes('SOS')) extraClass = 'log-danger';
+
+        const div = document.createElement('div');
+        div.className = `log-bubble ${extraClass}`;
+        div.innerHTML = `<div class="log-time">${timeStr}</div><div>${msg}</div>`;
+        out.prepend(div);
+
+        // Keep max 20 logs
+        while (out.children.length > 20) {
+            out.removeChild(out.lastChild);
+        }
+    }
+
+    // Override global window.addLog to use this new beautiful logger
+    window.addLog = addLog;
+
+    // == Socket ==
+    const connBadge = document.getElementById('conn-badge');
+
+    if (socket.connected && connBadge) {
+        connBadge.innerHTML = '<span class="status-dot" style="width:8px;height:8px;background:var(--primary);border-radius:50%;display:inline-block;"></span> 已连接';
+        connBadge.className = 'badge badge-success';
+        // 避免重复日志
+        if (document.getElementById('output').innerHTML.includes('准备就绪')) {
+            addLog("系统已连接", "info");
+        }
+        socket.emit('request_nav_state');
+    }
+
+    socket.on('connect', () => {
+        socket.emit('request_nav_state');
+        if (connBadge) {
+            connBadge.innerHTML = '<span class="status-dot" style="width:8px;height:8px;background:var(--primary);border-radius:50%;display:inline-block;"></span> 已连接';
+            connBadge.className = 'badge badge-success';
+        }
+    });
+
+    socket.on('nav_state_update', (state) => {
+        if (!state) return;
+        currentMode = state.mode || 'walking';
+        isNavigating = state.is_navigating || false;
+        setMode(currentMode);
+
+        const btn = document.getElementById('start-nav-btn');
+        if (isNavigating) {
+            const destName = state.destination || "";
+            if (destName && destName !== 'None') {
+                document.getElementById('dest-input').value = destName;
+            }
+            btn.innerHTML = '<span class="material-icons-round" style="margin-right: 8px;">close</span> 结束导航';
+            btn.classList.add('navigating');
+            // Check if log is mostly empty (to avoid spamming on hot reloads)
+            if (document.getElementById('output').innerHTML.includes('准备就绪') || document.getElementById('output').innerHTML.includes('已连接')) {
+                addLog(`[会话恢复] 正在为您继续导航至：${destName}`, 'info');
+            }
+        } else {
+            btn.innerHTML = '<span class="material-icons-round" style="margin-right: 8px;">navigation</span> 开始探索';
+            btn.classList.remove('navigating');
+        }
+    });
+
+    // == GPS & AMap Conversions ==
+    const gpsStatus = document.getElementById('gps-status');
+    const gpsCoords = document.getElementById('gps-coords');
+
+    const PI = 3.1415926535897932384626;
+    const a = 6378245.0;
+    const ee = 0.00669342162296594323;
+
+    function wgs84ToGcj02(lng, lat) {
+        if (outOfChina(lng, lat)) return [lng, lat];
+        let dLat = transformLat(lng - 105.0, lat - 35.0);
+        let dLng = transformLng(lng - 105.0, lat - 35.0);
+        let radLat = lat / 180.0 * PI;
+        let magic = Math.sin(radLat);
+        magic = 1 - ee * magic * magic;
+        let sqrtMagic = Math.sqrt(magic);
+        dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * PI);
+        dLng = (dLng * 180.0) / (a / sqrtMagic * Math.cos(radLat) * PI);
+        return [lng + dLng, lat + dLat];
+    }
+
+    function transformLat(x, y) {
+        let ret = -100.0 + 2.0 * x + 3.0 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x));
+        ret += (20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0 / 3.0;
+        ret += (20.0 * Math.sin(y * PI) + 40.0 * Math.sin(y / 3.0 * PI)) * 2.0 / 3.0;
+        ret += (160.0 * Math.sin(y / 12.0 * PI) + 320 * Math.sin(y * PI / 30.0)) * 2.0 / 3.0;
+        return ret;
+    }
+    function transformLng(x, y) {
+        let ret = 300.0 + x + 2.0 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x));
+        ret += (20.0 * Math.sin(6.0 * x * PI) + 20.0 * Math.sin(2.0 * x * PI)) * 2.0 / 3.0;
+        ret += (20.0 * Math.sin(x * PI) + 40.0 * Math.sin(x / 3.0 * PI)) * 2.0 / 3.0;
+        ret += (150.0 * Math.sin(x / 12.0 * PI) + 300.0 * Math.sin(x / 30.0 * PI)) * 2.0 / 3.0;
+        return ret;
+    }
+    function outOfChina(lng, lat) {
+        return (lng < 72.004 || lng > 137.8347) || (lat < 0.8293 || lat > 55.8271);
+    }
+
+    if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(success, error, {
+            enableHighAccuracy: true,
+            maximumAge: 1000,
+            timeout: 5000
+        });
+    }
+
+    function success(pos) {
+        const crd = pos.coords;
+        if (crd.accuracy > 5000) {
+            gpsStatus.innerHTML = `<span class="material-icons-round" style="font-size:14px;vertical-align:middle;">location_off</span> 信号极弱 (±${crd.accuracy.toFixed(0)}m)`;
+            gpsStatus.className = "text-danger";
+            return;
+        }
+
+        const isWeak = crd.accuracy > 120;
+        gpsStatus.innerHTML = `<span class="material-icons-round" style="font-size:14px;vertical-align:middle;">my_location</span> ${isWeak ? '基站信号' : '信号良好'} (±${crd.accuracy.toFixed(1)}m)`;
+        gpsStatus.className = isWeak ? "text-warning" : "text-success";
+
+        const [gcjLon, gcjLat] = wgs84ToGcj02(crd.longitude, crd.latitude);
+        lastLat = gcjLat;
+        lastLon = gcjLon;
+        gpsCoords.innerText = `当前坐标: ${gcjLon.toFixed(5)}, ${gcjLat.toFixed(5)}`;
+
+        socket.emit('update_gps', {
+            lat: gcjLat, lon: gcjLon,
+            acc: crd.accuracy, spd: crd.speed,
+            head: crd.heading, t: new Date().getTime()
+        });
+    }
+
+    function error(err) {
+        gpsStatus.innerHTML = `<span class="material-icons-round" style="font-size:14px;vertical-align:middle;">error_outline</span> 定位失败`;
+        gpsStatus.className = "text-danger";
+        gpsCoords.innerText = err.message;
+    }
+
+    // PDR Sensors
+    let currentHeading = 0;
+    let lastStepTime = 0;
+    const STEP_THRESHOLD = 11.5;
+    let permissionRequested = false;
+
+    function requestMotionPermissions() {
+        if (permissionRequested) return;
+        permissionRequested = true;
+
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(state => {
+                    if (state === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                        window.addEventListener('devicemotion', handleMotion);
+                    } else {
+                        addLog("未获得运动传感器权限，将仅依赖普通GPS。", 'warning');
+                    }
+                }).catch(console.error);
+        } else {
+            window.addEventListener('deviceorientationabsolute', handleOrientation);
+            window.addEventListener('deviceorientation', handleOrientation);
+            window.addEventListener('devicemotion', handleMotion);
+        }
+    }
+
+    function handleOrientation(e) {
+        let heading = e.webkitCompassHeading || (e.alpha !== null ? 360 - e.alpha : null);
+        if (heading !== null) currentHeading = heading === 360 ? 0 : heading;
+    }
+
+    function handleMotion(e) {
+        if (!isNavigating) return;
+        let acc = e.accelerationIncludingGravity;
+        if (!acc) return;
+        let mag = Math.sqrt(acc.x * acc.x + acc.y * acc.y + acc.z * acc.z);
+        let now = new Date().getTime();
+        if (mag > STEP_THRESHOLD && (now - lastStepTime) > 300) {
+            lastStepTime = now;
+            socket.emit('sensor_step', { heading: currentHeading });
+        }
+    }
+</script>
+{% endblock %}

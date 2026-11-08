@@ -1,0 +1,112 @@
+{% extends "auth_layout.html" %}
+
+{% block content %}
+<div class="brand-header">
+    <div class="brand-logo">📝</div>
+    <h1 class="brand-title">创建新账户</h1>
+    <p class="brand-subtitle">注册以连接您的智能辅助设备</p>
+</div>
+
+<form method="POST" action="{{ url_for('auth.register') }}">
+    <div class="form-group">
+        <label for="username" class="form-label">用户名</label>
+        <input type="text" id="username" name="username" class="form-input" required placeholder="设置您的用户名">
+    </div>
+
+    <div class="form-group">
+        <label for="password" class="form-label">设置密码</label>
+        <input type="password" id="password" name="password" class="form-input" required placeholder="请输入安全密码"
+            oninput="checkStrength()">
+        <!-- Strength Meter -->
+        <div style="height: 4px; background: #e5e7eb; margin-top: 8px; border-radius: 2px; overflow: hidden;">
+            <div id="strength-bar" style="height: 100%; width: 0%; transition: all 0.3s ease; background: #ef4444;">
+            </div>
+        </div>
+        <div id="strength-text" style="font-size: 12px; color: #6b7280; margin-top: 4px; text-align: right;">密码强度</div>
+    </div>
+
+    <div class="form-group">
+        <label for="confirm_password" class="form-label">确认密码</label>
+        <input type="password" id="confirm_password" name="confirm_password" class="form-input" required
+            placeholder="再次输入密码" oninput="checkMatch()">
+        <div id="match-msg" style="font-size: 12px; margin-top: 4px; height: 16px; font-weight:500; text-align: right;">
+        </div>
+    </div>
+
+    <div class="form-group">
+        <label for="role" class="form-label">身份角色</label>
+        <select id="role" name="role" class="form-input">
+            <option value="user">视障用户 (佩戴端)</option>
+            <option value="guardian">监护人 (监控端)</option>
+        </select>
+    </div>
+
+    <!-- Captcha -->
+    <div class="form-group">
+        <label for="captcha" class="form-label">安全验证</label>
+        <div class="captcha-row">
+            <input type="text" id="captcha" name="captcha" class="form-input" required placeholder="输入验证码"
+                autocomplete="off">
+            <div class="captcha-display" title="验证码">{{ captcha_code }}</div>
+        </div>
+    </div>
+
+    <button type="submit" id="submit-btn" class="btn-primary">立即注册</button>
+</form>
+
+<div class="auth-footer">
+    已有账户？ <a href="{{ url_for('auth.login') }}" class="auth-link">直接登录</a>
+</div>
+
+<script>
+    function checkStrength() {
+        const val = document.getElementById('password').value;
+        const bar = document.getElementById('strength-bar');
+        const txt = document.getElementById('strength-text');
+
+        let score = 0;
+        if (val.length > 5) score++;
+        if (val.length > 8) score++;
+        if (/[A-Z]/.test(val)) score++;
+        if (/[0-9]/.test(val)) score++;
+        if (/[^A-Za-z0-9]/.test(val)) score++;
+
+        if (score < 2) {
+            bar.style.width = '30%';
+            bar.style.background = '#ef4444'; // Red
+            txt.innerText = '密码强度: 弱';
+            txt.style.color = '#ef4444';
+        } else if (score < 4) {
+            bar.style.width = '60%';
+            bar.style.background = '#f59e0b'; // Orange
+            txt.innerText = '密码强度: 中';
+            txt.style.color = '#f59e0b';
+        } else {
+            bar.style.width = '100%';
+            bar.style.background = '#10b981'; // Green
+            txt.innerText = '密码强度: 强';
+            txt.style.color = '#10b981';
+        }
+        checkMatch();
+    }
+
+    function checkMatch() {
+        const p1 = document.getElementById('password').value;
+        const p2 = document.getElementById('confirm_password').value;
+        const msg = document.getElementById('match-msg');
+
+        if (!p2) {
+            msg.innerText = '';
+            return;
+        }
+
+        if (p1 === p2) {
+            msg.innerText = '密码一致 ✓';
+            msg.style.color = '#10b981';
+        } else {
+            msg.innerText = '密码不一致 ✗';
+            msg.style.color = '#ef4444';
+        }
+    }
+</script>
+{% endblock %}

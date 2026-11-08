@@ -1,0 +1,143 @@
+{% extends "mobile_layout.html" %}
+
+{% block header_title %}历史记录{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 20px;
+        margin-top: 10px;
+    }
+
+    .timeline::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 2px;
+        background: var(--border-color);
+    }
+
+    .timeline-item {
+        position: relative;
+        margin-bottom: 24px;
+    }
+
+    .timeline-dot {
+        position: absolute;
+        top: 4px;
+        left: -25px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: var(--bg-elevated);
+        border: 2px solid var(--accent);
+        box-shadow: 0 0 0 4px var(--bg-base);
+    }
+
+    .timeline-dot.danger {
+        border-color: var(--danger);
+    }
+
+    .timeline-dot.warning {
+        border-color: var(--warning);
+    }
+
+    .timeline-dot.nav {
+        border-color: var(--primary);
+    }
+
+    .timeline-content {
+        background: var(--bg-surface);
+        padding: 16px;
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .timeline-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        align-items: center;
+    }
+
+    .timeline-cat {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-secondary);
+    }
+
+    .timeline-cat.NAV {
+        background: rgba(52, 199, 89, 0.15);
+        color: var(--primary);
+    }
+
+    .timeline-cat.SOS {
+        background: rgba(255, 69, 58, 0.15);
+        color: var(--danger);
+    }
+
+    .timeline-cat.WARNING {
+        background: rgba(255, 159, 10, 0.15);
+        color: var(--warning);
+    }
+
+    .timeline-cat.REMOTE {
+        background: rgba(10, 132, 255, 0.15);
+        color: var(--accent);
+    }
+
+    .timeline-time {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+    }
+
+    .timeline-body {
+        font-size: 0.95rem;
+        color: var(--text-primary);
+        line-height: 1.5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="padding: 10px 0;">
+    <h2 style="font-size: 1.1rem; margin-bottom: 16px; color: var(--text-primary);">最近活动</h2>
+
+    {% if logs %}
+    <div class="timeline">
+        {% for log in logs %}
+        {% set dot_class = '' %}
+        {% if log.category == 'SOS' %} {% set dot_class = 'danger' %}
+        {% elif log.category == 'WARNING' %} {% set dot_class = 'warning' %}
+        {% elif log.category == 'NAV' %} {% set dot_class = 'nav' %}
+        {% endif %}
+
+        <div class="timeline-item">
+            <div class="timeline-dot {{ dot_class }}"></div>
+            <div class="timeline-content">
+                <div class="timeline-header">
+                    <span class="timeline-cat {{ log.category }}">{{ log.category }}</span>
+                    <span class="timeline-time">{{ log.timestamp.strftime('%m-%d %H:%M') }}</span>
+                </div>
+                <div class="timeline-body">
+                    {{ log.message }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="text-align: center; color: var(--text-muted); padding: 40px 20px;">
+        <span class="material-icons-round" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;">history</span>
+        <p>暂无任何历史记录</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

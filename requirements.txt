@@ -1,0 +1,16 @@
+opencv-python
+ultralytics
+flask
+flask-login
+flask-socketio
+flask-sqlalchemy
+requests
+SpeechRecognition
+edge-tts
+pygame
+openai
+rapidocr_onnxruntime
+pyOpenSSL
+cryptography
+simple-websocket
+eventlet

@@ -1,0 +1,26 @@
+# Local credentials and environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+instance/
+certs/
+*.sqlite
+*.sqlite-*
+*.db
+web/static/snapshots/
+assets/tts_*.mp3
+assets/temp_speech.mp3

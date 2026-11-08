@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史记录 | 智能导盲系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .history-container {
+            padding: 24px;
+        }
+
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .log-table th,
+        .log-table td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .log-table th {
+            background-color: #f8f9fa;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .log-table tr:hover {
+            background-color: #f1f3f5;
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .badge-nav {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .badge-sos {
+            background: #ffeeff;
+            color: #d32f2f;
+        }
+
+        .badge-config {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .badge-warning {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+    </style>
+</head>
+
+<body>
+    <aside class="sidebar">
+        <div class="brand">
+            <span class="material-icons" style="color: var(--primary-color);">visibility</span>
+            <span>BlindAssist</span>
+        </div>
+
+        <ul class="nav-links">
+            <li class="nav-item">
+                <a href="{{ url_for('index') }}" class="nav-link">
+                    <span class="material-icons nav-icon">dashboard</span>
+                    仪表盘
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('history') }}" class="nav-link active">
+                    <span class="material-icons nav-icon">history</span>
+                    历史记录
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('mobile_nav') }}" class="nav-link" style="color: #28a745; font-weight: bold;">
+                    <span class="material-icons nav-icon">smartphone</span>
+                    进入手机导航
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ url_for('settings') }}" class="nav-link">
+                    <span class="material-icons nav-icon">settings</span>
+                    设置
+                </a>
+            </li>
+        </ul>
+
+        <div class="user-profile">
+            <div class="avatar">{{ user.username[0] | upper }}</div>
+            <div class="user-info">
+                <div class="user-name">{{ user.username }}</div>
+                <div class="user-role">{% if user.role == 'guardian' %}监护人{% else %}用户{% endif %}</div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" title="退出登录"
+                style="color: var(--text-secondary); text-decoration: none;">
+                <span class="material-icons">logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <h1 class="page-title">系统操作与报警历史</h1>
+        </header>
+
+        <div class="history-container">
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>时间</th>
+                        <th>类别</th>
+                        <th>消息内容</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                        <td>
+                            <span class="badge badge-{{ log.category|lower }}">{{ log.category }}</span>
+                        </td>
+                        <td>{{ log.message }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #888;">暂无历史记录</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </main>
+</body>
+
+</html>

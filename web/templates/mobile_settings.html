@@ -1,0 +1,171 @@
+{% extends "mobile_layout.html" %}
+
+{% block header_title %}我的设置{% endblock %}
+
+{% block extra_css %}
+<style>
+    .settings-list {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        margin-top: 10px;
+    }
+
+    .settings-item {
+        background: var(--bg-surface);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        gap: 16px;
+    }
+
+    .settings-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(10, 132, 255, 0.15);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--accent);
+    }
+
+    .settings-icon.warning {
+        background: rgba(255, 159, 10, 0.15);
+        color: var(--warning);
+    }
+
+    .settings-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .settings-title {
+        font-size: 1.05rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    .settings-desc {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    /* Switch Toggle */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 28px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--border-color);
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+        background-color: #fff;
+        transition: .4s;
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    input:checked+.slider {
+        background-color: var(--primary);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(22px);
+    }
+
+    .logout-btn {
+        margin-top: 32px;
+        background-color: rgba(255, 69, 58, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(255, 69, 58, 0.3);
+    }
+
+    .logout-btn:active {
+        background-color: rgba(255, 69, 58, 0.2);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="settings-list">
+    <!-- User Profile Mockup -->
+    <div style="text-align: center; margin-bottom: 16px;">
+        <div
+            style="width: 80px; height: 80px; border-radius: 50%; background: var(--bg-elevated); border: 2px solid var(--accent); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center;">
+            <span class="material-icons-round" style="font-size: 40px; color: var(--text-muted);">person</span>
+        </div>
+        <h2 style="font-size: 1.25rem;">{{ user.username }}</h2>
+        <p class="text-secondary" style="font-size: 0.85rem; margin-top: 4px;">视障用户端</p>
+    </div>
+
+    <!-- Toggle Item -->
+    <div class="settings-item">
+        <div class="settings-icon">
+            <span class="material-icons-round">volume_up</span>
+        </div>
+        <div class="settings-info">
+            <span class="settings-title">语音播报</span>
+            <span class="settings-desc">实时阅读导航与警告信息</span>
+        </div>
+        <div>
+            <label class="switch">
+                <input type="checkbox" checked disabled>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <div class="settings-item">
+        <div class="settings-icon warning">
+            <span class="material-icons-round">sensors</span>
+        </div>
+        <div class="settings-info">
+            <span class="settings-title">高精定位引擎</span>
+            <span class="settings-desc">开启多传感器(PDR)融合补偿定位延迟</span>
+        </div>
+        <div>
+            <label class="switch">
+                <input type="checkbox" checked disabled>
+                <span class="slider"></span>
+            </label>
+        </div>
+    </div>
+
+    <!-- Logout -->
+    <form action="{{ url_for('auth.logout') }}" method="GET" style="margin-top: auto;">
+        <button type="submit" class="btn-modern logout-btn">
+            <span class="material-icons-round">logout</span>
+            退出登录
+        </button>
+    </form>
+</div>
+{% endblock %}

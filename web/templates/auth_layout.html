@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能导盲系统 - 登录</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Premium Color Palette (Deep Blue / Professional) */
+            --bg-color: #f3f4f6;
+            /* Light Gray Background */
+            --card-bg: #ffffff;
+            --primary-color: #2563eb;
+            /* Royal Blue */
+            --primary-hover: #1d4ed8;
+            --text-main: #111827;
+            /* Near Black */
+            --text-sub: #6b7280;
+            /* Gray */
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', "Microsoft YaHei", "PingFang SC", sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-image: radial-gradient(circle at 10% 20%, rgb(239, 246, 255) 0%, rgb(255, 255, 255) 90%);
+        }
+
+        .auth-wrapper {
+            width: 100%;
+            max-width: 440px;
+            padding: 20px;
+        }
+
+        .auth-card {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(10px);
+        }
+
+        .brand-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .brand-logo {
+            font-size: 32px;
+            margin-bottom: 12px;
+            display: block;
+        }
+
+        .brand-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+
+        .brand-subtitle {
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            background-color: #f9fafb;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            background-color: #fff;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .auth-footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        .auth-link {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .auth-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Captcha */
+        .captcha-row {
+            display: flex;
+            gap: 12px;
+        }
+
+        .captcha-display {
+            background: #e0e7ff;
+            color: #3730a3;
+            font-family: 'Courier New', monospace;
+            font-size: 20px;
+            font-weight: bold;
+            padding: 0 16px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 4px;
+            user-select: none;
+            border: 1px dashed #a5b4fc;
+            min-width: 120px;
+        }
+
+        /* Flash Messages */
+        .flash-message {
+            background-color: #fef2f2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 24px;
+            border: 1px solid #fca5a5;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="auth-wrapper">
+        <div class="auth-card">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="flash-message">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+
+        <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
+            &copy; 2026 智能盲人辅助系统 | Smart Assist AI
+        </div>
+    </div>
+</body>
+
+</html>
